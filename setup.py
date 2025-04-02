@@ -88,11 +88,11 @@ def prepare_reference(init_file: Path):
         sh_run([
             crop_cmd,
             "-i", str(straighten_out),
-            # The below ensures a 32x32x256 voxel sequence
-            "-xmin", "16",
-            "-xmax", "48",
-            "-ymin", "28",
-            "-ymax", "60",
+            # The below ensures a 64x64x256 voxel sequence
+            "-xmin", "0",
+            "-xmax", "64",
+            "-ymin", "12",
+            "-ymax", "76",
             "-zmin", "0",
             "-zmax", "256"
         ])
