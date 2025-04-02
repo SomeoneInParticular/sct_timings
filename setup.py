@@ -102,15 +102,15 @@ def prepare_reference(init_file: Path):
     return crop_out
 
 
-def generate_z_axis_resamples(in_file, out_dir):
-    # Resample the image along the z axis to give us a base-2 logarithmic range
-    sampling_ratios = [2 ** i for i in range(-2, 3)]
+def generate_z_axis_resamples(in_file, out_dir, sampling_ratios):
+    # Setup
     resample_cmd = "sct_resample"
     z_out = out_dir / "z_ratios"
     z_out.mkdir(exist_ok=True, parents=True)
 
     for sr in sampling_ratios:
-        z_out_file = z_out / f"{sr}.nii.gz"
+        sr_str = f"{sr:.3}"
+        z_out_file = z_out / f"{sr_str}.nii.gz"
         if z_out_file.exists():
             logging.info(f"File '{str(z_out_file)}' already exists, skipping")
             continue
@@ -118,19 +118,19 @@ def generate_z_axis_resamples(in_file, out_dir):
             resample_cmd,
             "-i", str(in_file),
             "-o", z_out_file,
-            "-f", f"1x1x{str(sr)}"
+            "-f", f"1x1x{sr_str}"
         ])
 
 
-def generate_xy_axis_resamples(in_file, out_dir):
-    # Resample the image along the z axis to give us a base-2 logarithmic range
-    sampling_ratios = [2 ** i for i in range(-2, 3)]
+def generate_xy_axis_resamples(in_file, out_dir, sampling_ratios):
+    # Setup
     resample_cmd = "sct_resample"
     xy_out = out_dir / "xy_ratios"
     xy_out.mkdir(exist_ok=True, parents=True)
 
     for sr in sampling_ratios:
-        xy_out_file = xy_out / f"{sr}.nii.gz"
+        sr_str = f"{sr:.3}"
+        xy_out_file = xy_out / f"{sr_str}.nii.gz"
         if xy_out_file.exists():
             logging.info(f"File '{str(xy_out_file)}' already exists, skipping")
             continue
@@ -138,7 +138,7 @@ def generate_xy_axis_resamples(in_file, out_dir):
             resample_cmd,
             "-i", str(in_file),
             "-o", xy_out_file,
-            "-f", f"{str(sr)}x{str(sr)}x1"
+            "-f", f"{sr_str}x{sr_str}x1"
         ])
 
 
@@ -158,5 +158,8 @@ if __name__ == "__main__":
     reference_file = prepare_reference(source_file)
 
     # Resample the reference file along the z-axis and xy-plane
-    generate_z_axis_resamples(reference_file, data_dir)
-    generate_xy_axis_resamples(reference_file, data_dir)
+    under_sampling = [.1 * x for x in range(1, 10)]
+    over_sampling = [float(2**x) for x in range(4)]
+    sampling_range = [*under_sampling, *over_sampling]
+    generate_z_axis_resamples(reference_file, data_dir, sampling_range)
+    generate_xy_axis_resamples(reference_file, data_dir, sampling_range)
