@@ -1,3 +1,4 @@
 {
-  "sct_bin": "/user_name/spinalcordtoolbox/bin"
+  "sct_bin": "/user_name/spinalcordtoolbox/bin",
+  "task": "spinalcord"
 }
