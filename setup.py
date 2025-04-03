@@ -28,6 +28,7 @@ def setup_sct_bin():
 
 def download_data(output_dir, output_file) -> Path:
     # If the output source already exists, skip this step
+    logging.info("Grabbing source file!")
     if output_file.exists():
         logging.info("Source file already exists, skipping downloading")
         return output_file
@@ -145,7 +146,7 @@ def generate_xy_axis_resamples(in_file, out_dir, sampling_ratios):
 if __name__ == "__main__":
     # Set up the script
     logging.root.setLevel("INFO")
-    data_dir = Path("data")
+    data_dir = Path("./data").resolve()
     source_file = data_dir / "source.nii.gz"
 
     # Add the SCT bin to our PATH, saving us some pain later
