@@ -47,6 +47,16 @@ jobs:
         
         # Run the setup
         python setup.py
-        
-        # TMP: List the current directory
-        ls *
+    - name: Run the Timings
+      run: |
+        python run.py
+    - name: Make Z Results Available
+      uses: actions/upload-artifact@v4
+      with:
+        name: z.tsv
+        path: results/z.tsv
+    - name: Make XY Results Available
+      uses: actions/upload-artifact@v4
+      with:
+        name: xy.tsv
+        path: results/xy.tsv
