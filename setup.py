@@ -32,11 +32,11 @@ def download_data(output_dir, output_file) -> Path:
         logging.info("Source file already exists, skipping downloading")
         return output_file
 
-    output_dir.parent.mkdir(exist_ok=True, parents=True)
+    output_dir.mkdir(exist_ok=True, parents=True)
     zip_file = output_dir / "source.zip"
     request.urlretrieve(
         "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20250310/data_spinalcord-segmentation.zip",
-        output_dir / "source.zip"
+        zip_file
     )
     # Extract the archive, and isolate the NIFTI file
     zip_out = output_dir / "zip_data"
