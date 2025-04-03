@@ -1,0 +1,37 @@
+name: Evaluate Latest SCT DeepSeg Runtime
+
+# Only run this when explicitly requested, as it can be quite slow
+on: [workflow_dispatch]
+
+env:
+    # Force APT to run non-interactively (prevent occasional hangs)
+    DEBIAN_FRONTEND: 'noninteractive'
+    # Turns on color output for pytest
+    PY_COLORS: "1"
+    # Disable progress bars for less verbose output
+    PIP_PROGRESS_BAR: "off"
+    SCT_PROGRESS_BAR: "off"
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    - name: Clone SCT master branch
+      uses: GuillaumeFalourd/clone-github-repo-action@v2.1
+      with:
+        depth: 1
+        branch: 'master'
+        owner: 'spinalcordtoolbox'
+        repository: 'spinalcordtoolbox'
+    - name: Install SCT
+      run: |
+        cd spinalcordtoolbox
+        ./install_sct -y
+        cd ..
+    - name: Check dependencies
+      run: sct_check_dependencies
