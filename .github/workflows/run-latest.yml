@@ -50,13 +50,8 @@ jobs:
     - name: Run the Timings
       run: |
         python run.py
-    - name: Make Z Results Available
+    - name: Make Results Available
       uses: actions/upload-artifact@v4
       with:
-        name: z.tsv
-        path: results/z.tsv
-    - name: Make XY Results Available
-      uses: actions/upload-artifact@v4
-      with:
-        name: xy.tsv
-        path: results/xy.tsv
+        name: timing_results
+        path: results
