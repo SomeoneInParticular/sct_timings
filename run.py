@@ -16,12 +16,13 @@ def get_config_vals():
 
 
 def run_z_tests():
-    z_out_file = Path("results_z.tsv")
+    z_out_file = Path("results/z.tsv")
+    z_out_file.parent.mkdir(parents=True, exist_ok=True)
     if z_out_file.exists():
         z_out_file.unlink()
-        with open(z_out_file, 'w') as fp:
-            z_tsv = csv.writer(fp, delimiter='\t')
-            z_tsv.writerow(['Scaling', 'Runtime'])
+    with open(z_out_file, 'w') as fp:
+        z_tsv = csv.writer(fp, delimiter='\t')
+        z_tsv.writerow(['Scaling', 'Runtime'])
     # Run the analysis on each of our z-ratio files
     for p in Path('data/z_ratios').glob('*.nii.gz'):
         # Gee Nifty, how come your specification lets you have two extensions?
@@ -48,12 +49,13 @@ def run_z_tests():
 
 
 def run_xy_tests():
-    xy_out_file = Path("results_xy.tsv")
+    xy_out_file = Path("results/xy.tsv")
+    xy_out_file.parent.mkdir(parents=True, exist_ok=True)
     if xy_out_file.exists():
         xy_out_file.unlink()
-        with open(xy_out_file, 'w') as fp:
-            xy_tsv = csv.writer(fp, delimiter='\t')
-            xy_tsv.writerow(['Scaling', 'Runtime'])
+    with open(xy_out_file, 'w') as fp:
+        xy_tsv = csv.writer(fp, delimiter='\t')
+        xy_tsv.writerow(['Scaling', 'Runtime'])
     # Run the analysis on each of our z-ratio files
     for p in Path('data/xy_ratios').glob('*.nii.gz'):
         # Gee Nifty, how come your specification lets you have two extensions?
