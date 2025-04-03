@@ -34,4 +34,5 @@ jobs:
         ./install_sct -y
         cd ..
     - name: Check dependencies
-      run: sct_check_dependencies
+      run: |
+        ./spinalcordtoolbox/bin/sct_check_dependencies
