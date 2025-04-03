@@ -16,7 +16,8 @@ jobs:
   ubuntu:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Repo
+      uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -35,4 +36,6 @@ jobs:
         cd ..
     - name: Check dependencies
       run: |
+        # We don't add the bin to the Path to ensure its acting like a "remote" install.
+        # This it to keep parity with how the script would be run locally or on SLURM-based systems.
         ./spinalcordtoolbox/bin/sct_check_dependencies
