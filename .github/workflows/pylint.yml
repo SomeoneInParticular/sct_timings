@@ -1,23 +1,46 @@
-name: Pylint
+name: Check code quality
 
-on: [push]
+on: [pull_request]
 
 jobs:
-  build:
+  run_flake8_and_shellcheck_and_checkurl:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
       with:
-        python-version: ${{ matrix.python-version }}
+        fetch-depth: 0  # Fetches all references, which is needed to `git diff` with origin/master
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
     - name: Install dependencies
+      run: pip install flake8
+    # Note: flake8 picks up project-wide configuration options from 'setup.cfg' in SCT's root directory
+    # We set -o pipefail so that the check fails if there's an error with the `git diff` part of the pipeline.
+    # We allow (($? == 1)) after grep to allow the empty list as a result (but not (($? == 2)), which would be some other error with grep).
+    # We specify --no-run-if-empty so that flake8 doesn't check the whole repo when no .py files got changed.
+    - name: Lint Python files with flake8
       run: |
-        python -m pip install --upgrade pip
-        pip install pylint
-    - name: Analysing the code with pylint
+        set -eu -o pipefail
+        git diff --name-only --diff-filter=d \
+          --merge-base refs/remotes/origin/master -- \
+          | (grep '\.py$' || (($? == 1)) ) \
+          | xargs --delimiter='\n' --no-run-if-empty flake8
+
+    - name: Check shell scripts with shellcheck
+      uses: ludeeus/action-shellcheck@master
+      with:
+        severity: style
+
+    # There's a daily check for _all_ links in check-broken-links.yml,
+    # so this only checks for new/changed links in the PR
+    - name: Check for broken links
       run: |
-        pylint $(git ls-files '*.py')
+        set -eu -o pipefail
+        git diff origin/master... |
+          sed '/^diff.*CHANGES.md/,/^diff/ d' |
+          (grep '^+' || (($? == 1)) ) |
+          (grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' || (($? == 1)) ) |
+          sed 's/^/diff;/' |
+          xargs -rn 1 .github/workflows/check-url.sh
+        test ! -s invalid_urls.txt
