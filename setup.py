@@ -40,6 +40,9 @@ def download_data(output_dir, output_file) -> Path:
     nifti_files[0].rename(output_file)
     rmtree(zip_out)  # Clean up
 
+    # If the output source already exists, skip this step
+    logging.info(f"Source file downloaded, available at '{output_file.resolve()}'.")
+
     return output_file
 
 

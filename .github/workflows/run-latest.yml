@@ -12,7 +12,7 @@ env:
     PIP_PROGRESS_BAR: "off"
     SCT_PROGRESS_BAR: "off"
     # Convenience variables
-    SCT_BIN_PATH: "spinalcordtoolbox/bin"  # I will throat punch the first windows dev I meet, I swear to god
+    SCT_BIN_PATH: "spinalcordtoolbox/bin"
     RESULT_PATH: "ci_results"
     # The DeepSeg task we want to test
     DEEPSEG_TASK: "spinalcord"
@@ -113,7 +113,6 @@ jobs:
         run: |
           ./spinalcordtoolbox/bin/sct_check_dependencies
       - name: Prepare Images
-        # Holy hell I hate Windows
         shell: cmd
         run: python setup.py -s ${{ env.SCT_BIN_PATH }}
       - name: Run the Timings
