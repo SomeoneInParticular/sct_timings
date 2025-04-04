@@ -49,6 +49,7 @@ def prepare_reference(init_file: Path, data_path: Path):
     init_name = init_file.name.split('.')[0]
     out_prefix = str(data_path / init_name)
     centerline_out = Path(out_prefix + "_centerline.nii.gz")
+
     # Generate a centerline, if it doesn't already exist
     if not centerline_out.exists():
         logging.info("Calculating the centerline of the source sequence for use in straightening")
