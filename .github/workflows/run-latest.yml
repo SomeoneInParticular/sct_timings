@@ -124,7 +124,7 @@ jobs:
         shell: cmd
         run: |
           del config.json
-          copy ./.github/ci_resources/config.json .
+          copy ".github/ci_resources/config.json" "config.json"
 
           python setup.py
       - name: Run the Timings
