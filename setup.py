@@ -13,7 +13,10 @@ def setup_sct_bin():
     # Get the desired SCT bin and add it to our shell's PATH
     logging.info("Adding SCT install to PATH")
 
-    with open("config.json", 'r') as fp:
+    for p in Path('.').glob('*'):
+        print(p.resolve())
+
+    with open(Path("./config.json").resolve(), 'r') as fp:
         config_vals = load(fp)
     sct_bin = Path(config_vals['sct_bin'])
 
