@@ -96,3 +96,46 @@ jobs:
         with:
           name: macos_results
           path: results
+  windows:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Clone SCT master branch
+        uses: GuillaumeFalourd/clone-github-repo-action@v2.1
+        with:
+          depth: 1
+          owner: 'spinalcordtoolbox'
+          repository: 'spinalcordtoolbox'
+      - name: Install SCT
+        shell: cmd
+        run: |
+          cd spinalcordtoolbox
+          install_sct.bat
+          cd ..
+      - name: Check dependencies
+        run: |
+          # We don't add the bin to the Path to ensure its acting like a "remote" install.
+          # This it to keep parity with how the script would be run locally or on SLURM-based systems.
+          ./spinalcordtoolbox/bin/sct_check_dependencies
+      - name: Prepare Images
+        shell: cmd
+        run: |
+          # Replace the "demo" config with one we have set-up for this CI
+          del config.json
+          copy ./.github/ci_resources/config.json .
+
+          # Run the setup
+          python setup.py
+      - name: Run the Timings
+        run: |
+          python run.py
+      - name: Make Results Available
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows_results
+          path: results
