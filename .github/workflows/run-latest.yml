@@ -51,7 +51,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ubuntu_results
-        path: $RESULT_PATH
+        path: ${{ env.RESULT_PATH }}
 
   macos:
     runs-on: macos-13
@@ -86,7 +86,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu_results
-          path: $RESULT_PATH
+          path: ${{ env.RESULT_PATH }}
 
   windows:
     runs-on: windows-2022
@@ -115,12 +115,12 @@ jobs:
       - name: Prepare Images
         # Holy hell I hate Windows
         shell: cmd
-        run: python setup.py -s %SCT_BIN_PATH%
+        run: python setup.py -s ${{ env.SCT_BIN_PATH }}
       - name: Run the Timings
         shell: cmd
-        run: python run.py -s %SCT_BIN_PATH% -t %DEEPSEG_TASK% -r %RESULT_PATH%
+        run: python run.py -s ${{ env.SCT_BIN_PATH }} -t ${{ env.DEEPSEG_TASK }} -r ${{ env.RESULT_PATH }}
       - name: Make Results Available
         uses: actions/upload-artifact@v4
         with:
           name: windows_results
-          path: $RESULT_PATH
+          path: ${{ env.RESULT_PATH }}
