@@ -1,22 +1,13 @@
 import logging
 import os
-from json import load
 from pathlib import Path
 from shutil import rmtree
+from subprocess import run as sh_run
 from urllib import request
 from zipfile import ZipFile
 
-from subprocess import run as sh_run
 
-
-def setup_sct_bin():
-    # Get the desired SCT bin and add it to our shell's PATH
-    logging.info("Adding SCT install to PATH")
-
-    with open(Path("./config.json").resolve(), 'r') as fp:
-        config_vals = load(fp)
-    sct_bin = Path(config_vals['sct_bin'])
-
+def setup_sct_bin(sct_bin: Path):
     if not sct_bin.exists():
         raise ValueError(f"Provided `sct_bin` directory '{sct_bin}' does not exist!")
     elif not sct_bin.is_dir():
@@ -52,10 +43,12 @@ def download_data(output_dir, output_file) -> Path:
     return output_file
 
 
-def prepare_reference(init_file: Path):
+def prepare_reference(init_file: Path, data_path: Path):
     # Find the spinal cord centerline
     centerline_cmd = "sct_get_centerline"
-    centerline_out = Path((str(init_file).split('.')[0] + "_centerline.nii.gz"))
+    init_name = init_file.name.split('.')[0]
+    out_prefix = str(data_path / init_name)
+    centerline_out = Path(out_prefix + "_centerline.nii.gz")
     # Generate a centerline, if it doesn't already exist
     if not centerline_out.exists():
         logging.info("Calculating the centerline of the source sequence for use in straightening")
@@ -66,9 +59,10 @@ def prepare_reference(init_file: Path):
         ])
     else:
         logging.info("Using existing centerline")
+
     # Straighten the spinal cord to allow for more uniform resolution tests later
     straighten_cmd = "sct_straighten_spinalcord"
-    straighten_out = Path((str(init_file).split('.')[0] + "_straight.nii.gz"))
+    straighten_out = Path(out_prefix + "_straight.nii.gz")
     # Generate the straightened spine, if it doesn't already exist
     if not straighten_out.exists():
         logging.info("Calculating the straightened image for use in cropping")
@@ -76,13 +70,14 @@ def prepare_reference(init_file: Path):
             straighten_cmd,
             "-i", str(init_file),
             "-s", str(centerline_out),
-            "-ofolder", str(data_dir)
+            "-ofolder", str(data_path)
         ])
     else:
         logging.info("Using existing straightened spinal cord.")
+
     # Crop the straighened spinal cord to a standard resolution
     crop_cmd = "sct_crop_image"
-    crop_out = Path((str(straighten_out).split('.')[0] + "_crop.nii.gz"))
+    crop_out = Path(out_prefix + "_straight_crop.nii.gz")
     # Generate the straightened spine, if it doesn't already exist
     if not crop_out.exists():
         logging.info("Calculating the cropped image")
@@ -143,24 +138,54 @@ def generate_xy_axis_resamples(in_file, out_dir, sampling_ratios):
         ])
 
 
-if __name__ == "__main__":
+def get_parser():
+    # We only ever need the argument parser when calling this function directly, so import ArgumentParser here
+    from argparse import ArgumentParser
+    parser = ArgumentParser(
+        description="Sets up the workspace for time-based testing of a designated SCT installation"
+    )
+
+    parser.add_argument(
+        '-s', '--sct_bin', required=True, type=Path,
+        help="Path to the SCT bin directory for the SCT version you want to test."
+    )
+
+    parser.add_argument(
+        '-d', '--data_path', type=Path, default="./data",
+        help="Where the imaging data which will be used for the analysis is stored."
+    )
+
+    return parser
+
+
+def main(sct_bin: Path, data_path: Path):
     # Set up the script
     logging.root.setLevel("INFO")
-    data_dir = Path("./data").resolve()
-    source_file = data_dir / "source.nii.gz"
+
+    # Resolve the full path name of the data dir, as some older version of ZIP don't do it for us
+    data_path = data_path.resolve()
+
+    # Define where the final source file should be placed
+    source_file = data_path / "source.nii.gz"
 
     # Add the SCT bin to our PATH, saving us some pain later
-    setup_sct_bin()
+    setup_sct_bin(sct_bin)
 
     # Download the data, if it doesn't already exist
-    download_data(data_dir, source_file)
+    download_data(data_path, source_file)
 
     # Prepare it by cropping it to a know 32x32x128 range
-    reference_file = prepare_reference(source_file)
+    reference_file = prepare_reference(source_file, data_path)
 
     # Resample the reference file along the z-axis and xy-plane
     under_sampling = [.1 * x for x in range(1, 10)]
-    over_sampling = [float(2**x) for x in range(4)]
+    over_sampling = [float(2 ** x) for x in range(4)]
     sampling_range = [*under_sampling, *over_sampling]
-    generate_z_axis_resamples(reference_file, data_dir, sampling_range)
-    generate_xy_axis_resamples(reference_file, data_dir, sampling_range)
+    generate_z_axis_resamples(reference_file, data_path, sampling_range)
+    generate_xy_axis_resamples(reference_file, data_path, sampling_range)
+
+
+if __name__ == "__main__":
+    cli_parser = get_parser()
+    argvs = cli_parser.parse_args().__dict__
+    main(**argvs)

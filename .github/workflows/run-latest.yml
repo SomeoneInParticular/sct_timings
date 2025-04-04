@@ -11,6 +11,11 @@ env:
     # Disable progress bars for less verbose output
     PIP_PROGRESS_BAR: "off"
     SCT_PROGRESS_BAR: "off"
+    # Convenience variables
+    SCT_BIN_PATH: "./spinalcordtoolbox/bin"
+    RESULT_PATH: "./ci_results"
+    # The DeepSeg task we want to test
+    DEEPSEG_TASK: "spinalcord"
 
 jobs:
   ubuntu:
@@ -39,21 +44,14 @@ jobs:
         # This it to keep parity with how the script would be run locally or on SLURM-based systems.
         ./spinalcordtoolbox/bin/sct_check_dependencies
     - name: Prepare Images
-      run: |
-        # Replace the "demo" config with one we have set-up for this CI
-        rm config.json
-        cp ./.github/ci_resources/config.json .
-        
-        # Run the setup
-        python setup.py
+      run: python setup.py -s $SCT_BIN_PATH
     - name: Run the Timings
-      run: |
-        python run.py
+      run: python run.py -s $SCT_BIN_PATH -t $DEEPSEG_TASK -r $RESULT_PATH
     - name: Make Results Available
       uses: actions/upload-artifact@v4
       with:
         name: ubuntu_results
-        path: results
+        path: $RESULT_PATH
 
   macos:
     runs-on: macos-13
@@ -81,21 +79,15 @@ jobs:
           # This it to keep parity with how the script would be run locally or on SLURM-based systems.
           ./spinalcordtoolbox/bin/sct_check_dependencies
       - name: Prepare Images
-        run: |
-          # Replace the "demo" config with one we have set-up for this CI
-          rm config.json
-          cp ./.github/ci_resources/config.json .
-          
-          # Run the setup
-          python setup.py
+        run: python setup.py -s $SCT_BIN_PATH
       - name: Run the Timings
-        run: |
-          python run.py
+        run: python run.py -s $SCT_BIN_PATH -t $DEEPSEG_TASK -r $RESULT_PATH
       - name: Make Results Available
         uses: actions/upload-artifact@v4
         with:
-          name: macos_results
-          path: results
+          name: ubuntu_results
+          path: $RESULT_PATH
+
   windows:
     runs-on: windows-2022
     steps:
@@ -121,17 +113,14 @@ jobs:
         run: |
           ./spinalcordtoolbox/bin/sct_check_dependencies
       - name: Prepare Images
+        # Holy hell I hate Windows
         shell: cmd
-        run: |
-          del config.json
-          copy ".github/ci_resources/config.json" "config.json"
-
-          python setup.py
+        run: python setup.py -s %SCT_BIN_PATH%
       - name: Run the Timings
-        run: |
-          python run.py
+        shell: cmd
+        run: python run.py -s %SCT_BIN_PATH% -t %DEEPSEG_TASK% -r %RESULT_PATH%
       - name: Make Results Available
         uses: actions/upload-artifact@v4
         with:
           name: windows_results
-          path: results
+          path: $RESULT_PATH
