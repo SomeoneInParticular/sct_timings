@@ -85,7 +85,7 @@ jobs:
       - name: Make Results Available
         uses: actions/upload-artifact@v4
         with:
-          name: ubuntu_results
+          name: macos_results
           path: ${{ env.RESULT_PATH }}
 
   windows:
