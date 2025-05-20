@@ -165,7 +165,7 @@ def get_parser():
 
     parser.add_argument(
         '-d', '--data_path', type=Path, default="./data",
-        help="Path to the folder with the imaging data to use for the analysis."
+        help="Path to the folder with the image data to use for the analysis."
     )
 
     return parser
