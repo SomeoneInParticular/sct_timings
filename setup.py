@@ -14,7 +14,7 @@ def setup_sct_bin(sct_bin: Path):
         raise ValueError(f"Provided `sct_bin` path '{sct_bin}' was not a directory!")
 
     current_path = os.environ['PATH']
-    os.environ['PATH'] = f"{current_path}:{sct_bin}"
+    os.environ['PATH'] = f"{current_path}{os.pathsep}{sct_bin}"
 
 
 def download_data(output_dir, output_file) -> Path:
