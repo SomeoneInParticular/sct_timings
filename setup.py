@@ -9,9 +9,11 @@ from zipfile import ZipFile
 
 def setup_sct_bin(sct_bin: Path):
     if not sct_bin.exists():
-        raise ValueError(f"Provided `sct_bin` directory '{sct_bin}' does not exist!")
+        raise ValueError(f"Provided `sct_bin` directory"
+                         f"'{sct_bin}' does not exist!")
     elif not sct_bin.is_dir():
-        raise ValueError(f"Provided `sct_bin` path '{sct_bin}' was not a directory!")
+        raise ValueError(f"Provided `sct_bin` path"
+                         f"'{sct_bin}' was not a directory!")
 
     current_path = os.environ['PATH']
     os.environ['PATH'] = f"{current_path}{os.pathsep}{sct_bin}"
@@ -26,8 +28,11 @@ def download_data(output_dir, output_file) -> Path:
 
     output_dir.mkdir(exist_ok=True, parents=True)
     zip_file = output_dir / "source.zip"
+    repo = "https://github.com/spinalcordtoolbox/sct_tutorial_data"
+    release = "r20250310"
+    zip_source = "data_spinalcord-segmentation.zip"
     request.urlretrieve(
-        "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20250310/data_spinalcord-segmentation.zip",
+        f"{repo}/releases/download/{release}/{zip_source}",
         zip_file
     )
     # Extract the archive, and isolate the NIFTI file
@@ -35,13 +40,14 @@ def download_data(output_dir, output_file) -> Path:
     with ZipFile(zip_file, 'r') as zfp:
         zfp.extractall(zip_out)
     zip_file.unlink()  # Clean up
-    # If the tutorial ever decides to include multiple files, just take the first one
+    # If the tutorial ever includes multiple files, just take the first one
     nifti_files = list(output_dir.glob("**/*.nii.gz"))
     nifti_files[0].rename(output_file)
     rmtree(zip_out)  # Clean up
 
     # If the output source already exists, skip this step
-    logging.info(f"Source file downloaded, available at '{output_file.resolve()}'.")
+    logging.info(f"Source file downloaded, available at "
+                 f"'{output_file.resolve()}'.")
 
     return output_file
 
@@ -55,7 +61,8 @@ def prepare_reference(init_file: Path, data_path: Path):
 
     # Generate a centerline, if it doesn't already exist
     if not centerline_out.exists():
-        logging.info("Calculating the centerline of the source sequence for use in straightening")
+        logging.info("Calculating the centerline of the source sequence for "
+                     "use in straightening")
         sh_run([
             centerline_cmd,
             "-i", str(init_file),
@@ -64,7 +71,7 @@ def prepare_reference(init_file: Path, data_path: Path):
     else:
         logging.info("Using existing centerline")
 
-    # Straighten the spinal cord to allow for more uniform resolution tests later
+    # Straighten the cord to allow for more uniform resolution tests later
     straighten_cmd = "sct_straighten_spinalcord"
     straighten_out = Path(out_prefix + "_straight.nii.gz")
     # Generate the straightened spine, if it doesn't already exist
@@ -143,20 +150,22 @@ def generate_xy_axis_resamples(in_file, out_dir, sampling_ratios):
 
 
 def get_parser():
-    # We only ever need the argument parser when calling this function directly, so import ArgumentParser here
+    # We only ever need the argument parser when calling this
+    # function directly, so import ArgumentParser here
     from argparse import ArgumentParser
     parser = ArgumentParser(
-        description="Sets up the workspace for time-based testing of a designated SCT installation"
+        description="Sets up the workspace for time-based testing of a "
+                    "designated SCT installation"
     )
 
     parser.add_argument(
         '-s', '--sct_bin', required=True, type=Path,
-        help="Path to the SCT bin directory for the SCT version you want to test."
+        help="Path to the `bin/` folder for the SCT version you want to test."
     )
 
     parser.add_argument(
         '-d', '--data_path', type=Path, default="./data",
-        help="Where the imaging data which will be used for the analysis is stored."
+        help="Path to the folder with the imaging data to use for the analysis."
     )
 
     return parser
@@ -166,7 +175,8 @@ def main(sct_bin: Path, data_path: Path):
     # Set up the script
     logging.root.setLevel("INFO")
 
-    # Resolve the full path name of the data dir, as some older version of ZIP don't do it for us
+    # Resolve the full path name of the data dir, as some older
+    # versions of ZIP don't do it for us
     data_path = data_path.resolve()
 
     # Define where the final source file should be placed
