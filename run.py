@@ -43,17 +43,22 @@ def iterative_replicate_run(deepseg_task: str, n: int, source_path: Path, out_fi
                 out_tsv.writerow([scaling, i, runtime])
 
 
+def init_results_file(result_file):
+    # Initiate the results file with a set of standard headers
+    with open(result_file, 'w') as fp:
+        xy_tsv = csv.writer(fp, delimiter='\t')
+        xy_tsv.writerow(['Scaling', 'Replicate', 'Runtime'])
+
+
 def run_z_tests(data_path: Path, result_path: Path, deepseg_task: str, n: int):
-    # Create the output file
+    # Reset the existing results file if it already exists
     z_out_file = result_path / "z.tsv"
     result_path.mkdir(parents=True, exist_ok=True)
 
     if z_out_file.exists():
         z_out_file.unlink()
 
-    with open(z_out_file, 'w') as fp:
-        z_tsv = csv.writer(fp, delimiter='\t')
-        z_tsv.writerow(['Scaling', 'Replicate', 'Runtime'])
+    init_results_file(z_out_file)
 
     # Run the analysis on each of our z-ratio files, n times
     source_path = data_path / "z_ratios"
@@ -61,15 +66,15 @@ def run_z_tests(data_path: Path, result_path: Path, deepseg_task: str, n: int):
 
 
 def run_xy_tests(data_path: Path, result_path: Path, deepseg_task: str, n: int):
+    # Reset the existing file if it already exists
     xy_out_file = result_path / "xy.tsv"
     result_path.mkdir(parents=True, exist_ok=True)
 
     if xy_out_file.exists():
         xy_out_file.unlink()
 
-    with open(xy_out_file, 'w') as fp:
-        xy_tsv = csv.writer(fp, delimiter='\t')
-        xy_tsv.writerow(['Scaling', 'Runtime'])
+    # Initialize the results file
+    init_results_file(xy_out_file)
 
     # Run the analysis on each of our z-ratio files, n times
     source_path = data_path / "xy_ratios"
