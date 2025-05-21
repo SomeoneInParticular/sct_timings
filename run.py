@@ -7,13 +7,10 @@ from tempfile import TemporaryDirectory
 from setup import setup_sct_bin
 
 
-def run_deepseg(in_path: Path, out_tsv: Path, deepseg_task: str):
-    # Gee Nifty, how come your specification lets you have two extensions?
-    scaling = float(in_path.name.split('.nii')[0])
+def run_deepseg(in_path: Path, deepseg_task: str):
     # Run the subshell in a temporary directory
     with TemporaryDirectory() as tmp:
         out_file = Path(str(tmp)) / "tmp.nii.gz"
-        logging.info(f"Running z-axis analysis on {in_path.name}")
         sh_out = sh_run([
             "sct_deepseg", deepseg_task,
             "-i", str(in_path),
@@ -22,13 +19,32 @@ def run_deepseg(in_path: Path, out_tsv: Path, deepseg_task: str):
     # Get the runtime from the log
     runtime_report = sh_out.stdout.decode("utf-8")
     runtime_seconds = float(runtime_report.split("runtime; ")[-1].split(" seconds")[0])
-    # Save the result to our file
-    with open(out_tsv, 'a') as fp:
-        z_tsv = csv.writer(fp, delimiter='\t')
-        z_tsv.writerow([scaling, runtime_seconds])
+    return runtime_seconds
 
 
-def run_z_tests(data_path: Path, result_path: Path, deepseg_task: str):
+def iterative_replicate_run(deepseg_task: str, n: int, source_path: Path, out_file: Path):
+    """
+    Runs the deepseg task
+    :param deepseg_task: The `sct_deepseg` task which should be run
+    :param n: The number of replicates which should be run
+    :param source_path: The source of MRI sequences which should be iterated through
+    :param out_file: The location of the output file that the results should be written too
+    :return: None
+    """
+    for p in source_path.glob('*.nii.gz'):
+        # Gee Nifty, how come your specification lets you have two extensions?
+        scaling = float(p.name.split('.nii')[0])
+        for i in range(n):
+            logging.info(f"Running analysis on {p} [replicate {i}]")
+            runtime = run_deepseg(p, deepseg_task)
+            # Save the result to our file
+            with open(out_file, 'a') as fp:
+                out_tsv = csv.writer(fp, delimiter='\t')
+                out_tsv.writerow([scaling, i, runtime])
+
+
+def run_z_tests(data_path: Path, result_path: Path, deepseg_task: str, n: int):
+    # Create the output file
     z_out_file = result_path / "z.tsv"
     result_path.mkdir(parents=True, exist_ok=True)
 
@@ -37,15 +53,14 @@ def run_z_tests(data_path: Path, result_path: Path, deepseg_task: str):
 
     with open(z_out_file, 'w') as fp:
         z_tsv = csv.writer(fp, delimiter='\t')
-        z_tsv.writerow(['Scaling', 'Runtime'])
+        z_tsv.writerow(['Scaling', 'Replicate', 'Runtime'])
 
-    # Run the analysis on each of our z-ratio files
+    # Run the analysis on each of our z-ratio files, n times
     source_path = data_path / "z_ratios"
-    for p in source_path.glob('*.nii.gz'):
-        run_deepseg(p, z_out_file, deepseg_task)
+    iterative_replicate_run(deepseg_task, n, source_path, z_out_file)
 
 
-def run_xy_tests(data_path: Path, result_path: Path, deepseg_task: str):
+def run_xy_tests(data_path: Path, result_path: Path, deepseg_task: str, n: int):
     xy_out_file = result_path / "xy.tsv"
     result_path.mkdir(parents=True, exist_ok=True)
 
@@ -56,10 +71,9 @@ def run_xy_tests(data_path: Path, result_path: Path, deepseg_task: str):
         xy_tsv = csv.writer(fp, delimiter='\t')
         xy_tsv.writerow(['Scaling', 'Runtime'])
 
-    # Run the analysis on each of our z-ratio files
+    # Run the analysis on each of our z-ratio files, n times
     source_path = data_path / "xy_ratios"
-    for p in source_path.glob('*.nii.gz'):
-        run_deepseg(p, xy_out_file, deepseg_task)
+    iterative_replicate_run(deepseg_task, n, source_path, xy_out_file)
 
 
 def get_parser():
@@ -87,19 +101,24 @@ def get_parser():
         '-r', '--result_path', type=Path, default="./results",
         help="Where the timing results of this analysis will be saved."
     )
+    parser.add_argument(
+        '-n', '--no_replicates', type=int, default=10,
+        help="Number of replicates runs for each testing file. "
+             "Higher results in a longer run time, but is more robust to changes in resource availability."
+    )
 
     return parser
 
 
-def main(sct_bin: Path, data_path: Path, result_path: Path, task: str):
+def main(sct_bin: Path, data_path: Path, result_path: Path, task: str, no_replicates: int):
     # Ensure everything we want logged is logged
     logging.root.setLevel("INFO")
     # Set up our SCT bin again
     setup_sct_bin(sct_bin)
     # Run the z-level tests
-    run_z_tests(data_path, result_path, task)
+    run_z_tests(data_path, result_path, task, no_replicates)
     # Run the xy-level tests
-    run_xy_tests(data_path, result_path, task)
+    run_xy_tests(data_path, result_path, task, no_replicates)
 
 
 # TODO: Running everything in series is shitty, write a GitHub CI to run it in parallel
