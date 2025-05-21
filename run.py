@@ -21,7 +21,7 @@ def run_deepseg(in_path: Path, out_tsv: Path, deepseg_task: str):
         ], capture_output=True)
     # Get the runtime from the log
     runtime_report = sh_out.stdout.decode("utf-8").split('\n')[-2]
-    runtime_seconds = float(runtime_report.split("; ")[-1].split(" s")[0])
+    runtime_seconds = float(runtime_report.split("runtime; ")[-1].split(" seconds")[0])
     # Save the result to our file
     with open(out_tsv, 'a') as fp:
         z_tsv = csv.writer(fp, delimiter='\t')
