@@ -2,14 +2,24 @@
 
 This repo acts as a means to evaluate the runtime of the `deepseg` utility provided by the [Spinal Cord Toolbox](https://spinalcordtoolbox.com/stable/index.html), allowing users to estimate the approximate time required to run an analysis.
 
-## Requirements
+## Running Though GitHub CI [For Neuropoly]
 
-* Python 3.7 or newer
-* A working installation of Spinal Cord Toolbox
+These instructions are generally how you should run this analysis when you want to evaluate a DeepSeg task's performance. If you want test it on a specific architecture. In that case, follow the instructions for "Running Locally" below.
+
+1. While on the `neuropoly/sct_timings` repository, go to the "Actions"
+1. On the left, a pinned option "Evaluate Latest SCT DeepSeg Runtime" should be present. Select it
+1. Click "Run workflow", selecting the branch you want ran if applicable.
+1. Wait until it completes; this can take a while, be patient!
+1. Download the resulting artifacts, containing the runtime results.
 
 ## Running Locally [For Developers]
 
 These instructions detail how to run this analysis on a local Linux computer. We recommend not actually doing this for real analyses, and instead relying on GitHub's CI to run things for you for all platforms (detail in the prior section).
+
+### Requirements
+
+* Python 3.7 or newer (ideally the Python version used by SCT)
+* A working installation of Spinal Cord Toolbox (alongside its associated Python environment)
 
 ### Preparing to run
 
@@ -31,8 +41,9 @@ These instructions detail how to run this analysis on a local Linux computer. We
    python run.py -s {sct_bin_path} -t {task_id} -n {no_replicates}
    ```
 
-### Plotting the results
-1. Activate the SCT environment provided by your SCT installation.
+## Plotting the results
+
+1. Activate the SCT environment provided by an SCT installation.
    * Note that is not the same as `sct_bin_path`, though in most SCT installations you can find it by going up a directory from there and into `python/envs/venv_sct`:
    ```bash
    source activate {sct_bin_path}/../python/envs/venv_sct
