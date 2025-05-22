@@ -13,25 +13,7 @@ def plot_results(df: pd.DataFrame, output_file: Path, title: Optional[str], zoom
 
     # If requested, add a "zoomed-in" inset of sub-1 ratio elements
     if zoom:
-        # Based on https://matplotlib.org/stable/gallery/subplots_axes_and_figures/zoom_inset_axes.html
-        x1, x2 = 0.05, 1.05
-        runtimes = df.query('Scaling <= 1')['Runtime']
-        y1, y2 = runtimes.min(), runtimes.max()
-        zoomed_ax = ax.inset_axes(
-            (0.05, 0.45, 0.45, 0.45),
-            xlim=(x1, x2), ylim=(y1, y2)
-        )
-        plot_data(zoomed_ax, df)
-        ax.indicate_inset_zoom(zoomed_ax, edgecolor="black")
-
-        # Add x-tick labels back in a less obtrusive manner
-        xtick_pos = [0.1 * (x+1) for x in range(10)]
-        xtick_labels = [f"{0.1 * (x+1):.1f}".lstrip('0') for x in range(10)]
-        zoomed_ax.set_xticks(xtick_pos, xtick_labels)
-        zoomed_ax.tick_params('both', which='major', labelsize=8)
-
-        # Move y-tick labels to the right side to avoid overlapping issues
-        zoomed_ax.yaxis.tick_right()
+        zoomed_subplot(ax, df)
 
     # Add axis labels
     ax.set_xlabel('Sequence Scaling')
@@ -47,6 +29,26 @@ def plot_results(df: pd.DataFrame, output_file: Path, title: Optional[str], zoom
     # Save the result
     output_file.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_file)
+
+
+def zoomed_subplot(based_ax, df):
+    # Based on https://matplotlib.org/stable/gallery/subplots_axes_and_figures/zoom_inset_axes.html # noqa: E501 (I can't exactly make the URL shorter)
+    x1, x2 = 0.05, 1.05
+    runtimes = df.query('Scaling <= 1')['Runtime']
+    y1, y2 = runtimes.min(), runtimes.max()
+    zoomed_ax = based_ax.inset_axes(
+        (0.05, 0.45, 0.45, 0.45),
+        xlim=(x1, x2), ylim=(y1, y2)
+    )
+    plot_data(zoomed_ax, df)
+    based_ax.indicate_inset_zoom(zoomed_ax, edgecolor="black")
+    # Add x-tick labels back in a less obtrusive manner
+    xtick_pos = [0.1 * (x + 1) for x in range(10)]
+    xtick_labels = [f"{0.1 * (x + 1):.1f}".lstrip('0') for x in range(10)]
+    zoomed_ax.set_xticks(xtick_pos, xtick_labels)
+    zoomed_ax.tick_params('both', which='major', labelsize=8)
+    # Move y-tick labels to the right side to avoid overlapping issues
+    zoomed_ax.yaxis.tick_right()
 
 
 def plot_data(ax, df):
